@@ -1,0 +1,46 @@
+const express = require('express');
+const bodyParser = require('body-parser');
+const { Pool } = require('pg');
+const cors = require('cors');
+
+const app = express();
+const port = process.env.PORT || 8080;
+
+app.use(cors());
+app.use(bodyParser.json());
+
+// PostgreSQL configuration from Render
+const pool = new Pool({
+  user: 'your_db_user',
+  host: 'dpg-d20g4c7diees739ge2t0-a',
+  database: 'sample_ce7g',
+  password: 'your_db_password',
+  port: 5432,
+  ssl: { rejectUnauthorized: false }
+});
+
+app.post('/submit-enquiry', async (req, res) => {
+  const { name, mobile, email, query } = req.body;
+  try {
+    await pool.query(
+      'INSERT INTO enquiries (name, mobile, email, query) VALUES ($1, $2, $3, $4)',
+      [name, mobile, email, query]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error inserting data:', err);
+    res.status(500).json({ success: false });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
+const path = require('path');
+
+app.use(express.static(path.join(__dirname, '../client')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/index.html'));
+});
